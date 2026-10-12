@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pet Power — 2 Player Card Game</title>
+<style>
+:root{--bg:#10131e;--panel:#1b2030;--panel2:#252c40;--ink:#f5f6fb;--muted:#aab2c8;--accent:#a78bfa;--gold:#f6c969;--red:#ff758f;--green:#6ee7b7}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#25203c 0,#10131e 55%);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+main{max-width:1050px;margin:auto;padding:22px 16px 40px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:clamp(25px,4vw,38px);font-weight:900;letter-spacing:-1px}.brand span{color:var(--accent)}.sub{color:var(--muted);font-size:14px}
+button{font:inherit;border:0;border-radius:12px;padding:11px 15px;cursor:pointer;font-weight:750;transition:.15s}button:hover{filter:brightness(1.1);transform:translateY(-1px)}button:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.primary{background:var(--accent);color:#171326}.secondary{background:#343b52;color:white}.danger{background:#5a2738;color:#ffe7ec}.tiny{padding:7px 10px;font-size:13px}
+.statusbar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}.stat,.player,.section{background:rgba(27,32,48,.92);border:1px solid #343b52;border-radius:18px;padding:15px}.stat label{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px}.stat strong{font-size:22px}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:12px}.player.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}.playerhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.playername{font-weight:850;font-size:18px}.tag{font-size:11px;background:#3c315b;color:#e3d9ff;border-radius:99px;padding:4px 8px}.tokens{color:var(--gold);letter-spacing:2px;font-size:18px}.zone{min-height:88px;margin-top:12px;background:#111521;border:1px dashed #3b435a;border-radius:13px;padding:12px}.zonehead{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}.played{display:flex;flex-wrap:wrap;gap:6px}.pill{background:#30384e;border-radius:8px;padding:5px 8px;font-size:12px}.pill b{color:var(--gold)}
+.section{margin-top:14px}.section h2{font-size:18px;margin:0 0 10px}.turnrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.notice{color:var(--muted);font-size:14px;margin:6px 0 12px}.hand{display:flex;gap:12px;flex-wrap:wrap}.card{position:relative;text-align:left;min-height:155px;width:min(100%,220px);flex:1 1 170px;max-width:240px;background:linear-gradient(145deg,#f5eaff,#cfc0f5);color:#241b3d;border:3px solid transparent;border-radius:17px;padding:13px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 7px 0 #6f5a9b}.card.selected{border-color:var(--gold);transform:translateY(-4px);box-shadow:0 10px 0 #8e722d}.card .num{font-size:32px;font-weight:950;line-height:1}.card .cname{font-size:16px;font-weight:900}.card .desc{font-size:12px;line-height:1.3;color:#51446c}.card .choose{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:#604e8b}.card:disabled{opacity:.55}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.log{max-height:210px;overflow:auto;color:#c8cee0;font-size:13px}.log div{padding:7px 0;border-bottom:1px solid #30364a}.log div:last-child{border:0}.empty{color:#8791aa;font-size:13px}.overlay{position:fixed;inset:0;background:rgba(8,10,17,.94);z-index:5;display:flex;align-items:center;justify-content:center;padding:22px}.modal{width:min(500px,100%);background:#20263a;border:1px solid #4b5270;border-radius:22px;padding:24px;text-align:center}.modal h2{font-size:27px;margin:0 0 8px}.modal p{color:var(--muted)}.modal .big{font-size:48px}.hide{display:none!important}.reference{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.refitem{background:#131827;border-radius:10px;padding:9px;font-size:13px}.refitem b{color:var(--gold)}.footer{color:#737e99;font-size:12px;text-align:center;margin-top:20px}
+@media(max-width:600px){main{padding:15px 11px 28px}.statusbar{gap:6px}.stat{padding:10px}.stat strong{font-size:18px}.players{gap:8px}.player{padding:10px}.playername{font-size:15px}.card{min-height:145px;flex-basis:135px;padding:10px}.card .cname{font-size:14px}.card .desc{font-size:11px}.section{padding:12px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><div><div class="brand">PET <span>POWER</span></div><div class="sub">A 2-player digital adaptation inspired by Power Hungry Pets</div></div><div style="display:flex;gap:8px"><button class="secondary" id="rulesBtn">How to play</button><button class="danger" id="newBtn">New game</button></div></div>
+  <div class="statusbar"><div class="stat"><label>Round</label><strong id="round">1</strong></div><div class="stat"><label>Draw pile</label><strong id="deckCount">15</strong></div><div class="stat"><label>First to</label><strong>3 tokens</strong></div></div>
+  <div class="players" id="players"></div>
+  <section class="section" id="gameSection">
+    <div class="turnrow"><h2 id="turnTitle">Player 1's turn</h2><span class="tag" id="phaseTag">DRAW A CARD</span></div>
+    <p class="notice" id="message">Draw a card to begin your turn.</p>
+    <div id="handArea"></div><div class="actions" id="actionButtons"></div>
+  </section>
+  <section class="section"><div class="turnrow"><h2>Round log</h2><button class="secondary tiny" id="clearLog">Clear log</button></div><div class="log" id="log"><div>Welcome! Start a new round and try to outsmart your opponent.</div></div></section>
+  <section class="section"><h2>Card reference</h2><div class="reference" id="reference"></div></section>
+  <div class="footer">Fan-made digital adaptation for private play. Not affiliated with or endorsed by Exploding Kittens.</div>
+</main>
+<div class="overlay" id="passOverlay"><div class="modal"><div class="big">🔒</div><h2 id="passTitle">Pass the phone</h2><p id="passText">Only the active player should look at the screen.</p><button class="primary" id="passBtn">I'm ready</button></div></div>
+<div class="overlay hide" id="modalOverlay"><div class="modal"><div class="big" id="modalEmoji">🐾</div><h2 id="modalTitle">Round over</h2><p id="modalText"></p><button class="primary" id="modalBtn">Continue</button></div></div>
+<div class="overlay hide" id="rulesOverlay"><div class="modal" style="text-align:left"><h2>How to play</h2><p>Each player starts with one secret card. On your turn, draw one card, choose which of your two cards to keep, then play the other and resolve its effect. Played cards stay visible. If you are eliminated, you sit out until the next round.</p><p>When the draw pile is empty, the highest card in hand wins the round. If tied, compare the highest card each tied player has played. First to <b>3 tokens</b> wins.</p><p><b>Two-player setup:</b> each player gets one card; three cards are removed from the deck (two shown face-up, one hidden).</p><div class="actions"><button class="primary" id="closeRules">Got it</button></div></div></div>
+<script>
+const defs=[
+{n:10,name:"King Cat",count:1,desc:"If played, you are eliminated."},
+{n:9,name:"Not A Pet!",count:1,desc:"If opponent holds King Cat, swap hands."},
+{n:8,name:"Hermit Home Swap",count:1,desc:"Swap your hand with opponent's hand."},
+{n:7,name:"Jittery Juggler",count:1,desc:"Both players return hands and draw new cards."},
+{n:6,name:"Doggy Grave Digger",count:1,desc:"Secretly view the hidden card; optionally swap it with your hand."},
+{n:5,name:"Snake Sorcerer",count:2,desc:"Opponent discards their hand and draws a replacement."},
+{n:4,name:"Shell Shield",count:2,desc:"Protect your hand until your next turn."},
+{n:3,name:"Battle Bunny",count:3,desc:"Compare hands; lower card is eliminated."},
+{n:2,name:"Mouse Trapper",count:3,desc:"Peek at a draw-pile card and put it back anywhere."},
+{n:1,name:"Crystal Bowl",count:5,desc:"Guess opponent's card (not 1); correct guess eliminates them."},
+{n:0,name:"Royal Robovac",count:1,desc:"At round end, beats all cards if opponent holds King Cat."}
+];
+let state={}, pending=null, logLines=[];
+const $=id=>document.getElementById(id);
+function card(n){return defs.find(d=>d.n===n)}
+function shuffled(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function freshDeck(){return shuffled(defs.flatMap(d=>Array(d.count).fill(d.n)))}
+function addLog(s){logLines.unshift(s);renderLog()}
+function renderLog(){$('log').innerHTML=logLines.slice(0,30).map(x=>`<div>${esc(x)}</div>`).join('')}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function initGame(){
+ let deck=freshDeck(), p1=deck.pop(),p2=deck.pop();
+ // two-player setup: three cards removed, two face up and one face down
+ let removed=[deck.pop(),deck.pop()], hidden=deck.pop();
+ state={round:1,deck,hidden,removed,players:[
+ {name:'Player 1',hand:p1,played:[],tokens:0,alive:true,shield:false},
+ {name:'Player 2',hand:p2,played:[],tokens:0,alive:true,shield:false}
+ ],turn:0,phase:'draw',drawn:null,ended:false,roundWinner:null,peeked:null};
+ logLines=[];addLog('New game started. Three cards removed for the 2-player setup.');
+ addLog('Face-up removed cards: '+removed.map(n=>card(n).n+' '+card(n).name).join(', ')+'.');
+ $('passOverlay').classList.remove('hide');$('passTitle').textContent="Player 1 starts";$('passText').textContent="Pass the phone to Player 1. Keep your hand secret."; $('passBtn').textContent="I'm Player 1";
+ render();
+}
+function render(){
+ $('round').textContent=state.round;$('deckCount').textContent=state.deck.length;
+ $('players').innerHTML=state.players.map((p,i)=>`<div class="player ${!state.ended&&state.turn===i?'active':''}"><div class="playerhead"><span class="playername">${p.name}</span><span class="tag">${p.alive?'IN ROUND':'ELIMINATED'}</span></div><div class="tokens">${'● '.repeat(p.tokens)}<span style="color:#5b6279">${'○ '.repeat(3-p.tokens)}</span></div><div class="zone"><div class="zonehead">Played cards · ${p.played.length}</div><div class="played">${p.played.length?p.played.map(n=>`<span class="pill"><b>${n}</b> ${card(n).name}</span>`).join(''):'<span class="empty">No cards played yet</span>'}</div>${p.shield?'<div class="pill" style="margin-top:7px;color:#9cebd0">🛡 Shield active</div>':''}</div></div>`).join('');
+ $('turnTitle').textContent=state.ended?'Round complete':state.players[state.turn].name+"'s turn";
+ $('phaseTag').textContent=state.ended?'ROUND OVER':state.phase==='draw'?'DRAW A CARD':state.phase==='choose'?'CHOOSE A CARD':'RESOLVE ACTION';
+ $('message').textContent=state.ended?'Start the next round to continue.':state.phase==='draw'?'Draw one card, then choose one to keep and one to play.':state.phase==='choose'?'Tap the card you want to PLAY. The other card stays in your hand.':'Resolve the effect below.';
+ const area=$('handArea'),buttons=$('actionButtons');buttons.innerHTML='';
+ if(state.ended){area.innerHTML='<p class="notice">The round has ended. The next round will be dealt after you continue.</p>';return}
+ const p=state.players[state.turn];
+ if(!p.alive){area.innerHTML='<p class="notice">You are eliminated and cannot take another turn.</p>';return}
+ if(state.phase==='draw'){area.innerHTML='<div class="hand"><div class="card" style="background:linear-gradient(145deg,#343b52,#1b2030);color:white;box-shadow:0 7px 0 #0b0d14"><div class="num">?</div><div class="cname">Draw pile</div><div class="desc">Your card is hidden until you draw.</div><div class="choose">Face down</div></div></div>';buttons.innerHTML='<button class="primary" id="drawBtn">Draw card</button>'; $('drawBtn').onclick=drawCard;}
+ else if(state.phase==='choose'){
+   area.innerHTML=`<div class="hand">${[p.hand,state.drawn].map((n,i)=>`<button class="card" data-cardidx="${i}"><div class="num">${n}</div><div class="cname">${card(n).name}</div><div class="desc">${card(n).desc}</div><div class="choose">Tap to play</div></button>`).join('')}</div>`;
+   area.querySelectorAll('[data-cardidx]').forEach(b=>b.onclick=()=>playCard(Number(b.dataset.cardidx)));
+ }
+ else if(state.phase==='resolve'){
+   area.innerHTML=`<div class="hand"><div class="card"><div class="num">${state.lastPlayed}</div><div class="cname">${card(state.lastPlayed).name}</div><div class="desc">${card(state.lastPlayed).desc}</div></div></div>`;
+   renderResolution(buttons);
+ }
+}
+function drawCard(){
+ if(state.deck.length===0){endRound();return}
+ const p=state.players[state.turn];state.drawn=state.deck.pop();state.phase='choose';addLog(p.name+' drew a card.');render();
+}
+function playCard(idx){
+ const p=state.players[state.turn], opponent=state.players[1-state.turn];
+ const played=idx===0?p.hand:state.drawn, kept=idx===0?state.drawn:p.hand;
+ p.hand=kept;p.played.push(played);state.lastPlayed=played;state.drawn=null;
+ if(played===10){p.alive=false;addLog(p.name+' played King Cat and was eliminated.');if(!opponent.alive){finishBySurvivor();return}endTurn();return}
+ state.phase='resolve';addLog(p.name+' played '+card(played).name+' ('+played+').');
+ if(played===4){p.shield=true;addLog(p.name+' is shielded until their next turn.');endTurn();return}
+ render();
+}
+function renderResolution(buttons){
+ const p=state.players[state.turn],o=state.players[1-state.turn],n=state.lastPlayed;
+ const btn=(label,fn,cls='primary')=>{let b=document.createElement('button');b.className=cls;b.textContent=label;b.onclick=fn;buttons.appendChild(b)};
+ if(n===1){btn('Guess opponent card',()=>guessDialog())}
+ else if(n===2){btn('Peek at top card',()=>peekCard())}
+ else if(n===3||n===8){btn(n===3?'Compare cards':'Swap hands',()=>resolveTarget(n))}
+ else if(n===5){btn('Force opponent to discard & redraw',()=>forceRedraw())}
+ else if(n===6){btn('View hidden card',()=>viewHidden())}
+ else if(n===7){btn('Both players redraw',()=>juggle())}
+ else if(n===9){btn('Check for King Cat',()=>notAPet())}
+ else if(n===0){btn('Finish turn',()=>endTurn())}
+ else {btn('Continue',()=>endTurn())}
+}
+function canTarget(o){return o.alive&&!o.shield}
+function guessDialog(){
+ const vals=[0,2,3,4,5,6,7,8,9,10];let opts=vals.map(n=>`<button class="secondary" data-guess="${n}">${n} · ${card(n).name}</button>`).join('');
+ showCustom('🔮','Guess the card','Choose a number. You cannot guess Crystal Bowl (1).',opts,el=>{let n=Number(el.dataset.guess),o=state.players[1-state.turn];if(!canTarget(o)){addLog('Opponent is protected; the guess has no effect.');endTurn();return}if(o.hand===n){o.alive=false;addLog('Correct guess! '+o.name+' was eliminated.');if(!o.alive)finishBySurvivor();else endTurn()}else{addLog('Wrong guess. Opponent keeps their card.');endTurn()}});
+}
+function resolveTarget(n){
+ const o=state.players[1-state.turn],p=state.players[state.turn];
+ if(!canTarget(o)){addLog('Opponent is protected by Shell Shield.');endTurn();return}
+ if(n===8){[p.hand,o.hand]=[o.hand,p.hand];addLog('Hands swapped.');endTurn();return}
+ if(p.hand>o.hand){o.alive=false;addLog('Battle Bunny: '+o.name+' had the lower card and was eliminated.')}
+ else if(p.hand<o.hand){p.alive=false;addLog('Battle Bunny: '+p.name+' had the lower card and was eliminated.')}
+ else addLog('Battle Bunny: cards tied; nobody was eliminated.');
+ if(!p.alive||!o.alive){if(p.alive||o.alive)finishBySurvivor();else{state.phase='draw';state.drawn=null;endRound()}return}endTurn();
+}
+function forceRedraw(){
+ const o=state.players[1-state.turn];if(!canTarget(o)){addLog('Opponent is protected by Shell Shield.');endTurn();return}
+ o.played.push(o.hand);let next=state.deck.length?state.deck.pop():state.hidden;
+ if(next===undefined||next===null){addLog('No replacement card available.');endTurn();return}
+ o.hand=next;if(next===10){o.alive=false;addLog(o.name+' drew King Cat and was eliminated.')}else addLog(o.name+' discarded their hand and drew a replacement.');
+ if(!o.alive&&state.players[state.turn].alive)finishBySurvivor();else endTurn();
+}
+function peekCard(){
+ if(!state.deck.length){addLog('The draw pile is empty; Mouse Trapper has no effect.');endTurn();return}
+ const n=state.deck[0];showCustom('🪤','Mouse Trapper','You secretly peeked: '+n+' · '+card(n).name+'. Choose where to put it.',`<button class="primary" data-place="top">Put it back on top</button><button class="secondary" data-place="bottom">Put it at bottom</button>`,el=>{if(el.dataset.place==='bottom')state.deck.unshift(state.deck.pop());addLog('Mouse Trapper peeked at a card and rearranged the draw pile.');endTurn()});
+}
+function viewHidden(){
+ showCustom('🦴','Hidden card','The hidden card is '+state.hidden+' · '+card(state.hidden).name+'. Do you want to swap it with your hand?',`<button class="primary" data-swap="yes">Swap with hidden card</button><button class="secondary" data-swap="no">Keep my card</button>`,el=>{if(el.dataset.swap==='yes'){[state.players[state.turn].hand,state.hidden]=[state.hidden,state.players[state.turn].hand];addLog('Doggy Grave Digger swapped the hand with the hidden card.')}else addLog('Doggy Grave Digger kept their card.');endTurn()});
+}
+function notAPet(){
+ const p=state.players[state.turn],o=state.players[1-state.turn];
+ if(p.hand===10){addLog('Not A Pet! does nothing because you hold King Cat.');endTurn();return}
+ if(o.hand===10&&!o.shield){[p.hand,o.hand]=[o.hand,p.hand];addLog('Not A Pet! forced the King Cat holder to swap hands.')}
+ else addLog('Not A Pet! had no effect; opponent did not hold an unshielded King Cat.');
+ endTurn();
+}
+function juggle(){
+ const alive=state.players.filter(p=>p.alive);
+ alive.forEach(p=>{p.played.push(p.hand)});
+ // Return all active players' hands to deck, shuffle, deal replacements
+ state.deck=shuffled([...state.deck,...alive.map(p=>p.hand)]);
+ alive.forEach(p=>{p.hand=state.deck.length?state.deck.pop():state.hidden;p.shield=false;if(p.hand===10){p.alive=false;addLog(p.name+' drew King Cat and was eliminated.')}});
+ addLog('Jittery Juggler reshuffled the active players’ hands and dealt new cards.');
+ if(state.players.filter(p=>p.alive).length===1)finishBySurvivor();else endTurn();
+}
+function showCustom(emoji,title,text,html,callback){
+ $('modalEmoji').textContent=emoji;$('modalTitle').textContent=title;$('modalText').textContent=text;
+ const old=$('modalBtn');old.classList.add('hide');
+ let area=document.querySelector('#modalOverlay .modal .customActions');if(area)area.remove();
+ area=document.createElement('div');area.className='actions customActions';area.innerHTML=html;$('modalText').after(area);
+ area.querySelectorAll('button').forEach(b=>b.onclick=()=>{$('modalOverlay').classList.add('hide');area.remove();old.classList.remove('hide');callback(b)});
+ $('modalOverlay').classList.remove('hide');
+}
+function endTurn(){
+ const current=state.players[state.turn];current.shield=false;
+ if(state.players.filter(p=>p.alive).length===1){finishBySurvivor();return}
+ const next=1-state.turn;
+ state.turn=next;state.drawn=null;state.phase='draw';
+ $('passOverlay').classList.remove('hide');$('passTitle').textContent=state.players[next].name+"'s turn";$('passText').textContent='Pass the phone. Make sure the next player cannot see your previous hand.';$('passBtn').textContent="I'm "+state.players[next].name;
+ render();
+}
+function finishBySurvivor(){const winner=state.players.find(p=>p.alive);if(winner){winner.tokens++;state.roundWinner=winner.name;addLog(winner.name+' wins the round and gains a token.')}finishRoundScreen()}
+function endRound(){
+ const alive=state.players.filter(p=>p.alive);
+ if(alive.length===1){finishBySurvivor();return}
+ let winner;
+ const [a,b]=state.players;
+ if(a.hand===0&&b.hand===10)winner=a;else if(b.hand===0&&a.hand===10)winner=b;
+ else if(a.hand>b.hand)winner=a;else if(b.hand>a.hand)winner=b;
+ else {let ah=Math.max(-1,...a.played),bh=Math.max(-1,...b.played);winner=ah>=bh?a:b}
+ winner.tokens++;state.roundWinner=winner.name;addLog('Draw pile empty. '+winner.name+' wins the round with '+winner.hand+' · '+card(winner.hand).name+'.');finishRoundScreen()
+}
+function finishRoundScreen(){
+ state.ended=true;state.phase='end';render();
+ const champ=state.players.find(p=>p.tokens>=3);
+ $('modalEmoji').textContent=champ?'🏆':'🎉';$('modalTitle').textContent=champ?champ.name+' wins the game!':state.roundWinner+' wins the round!';
+ $('modalText').textContent=champ?'Congratulations! They reached 3 tokens.':'Token awarded. Pass the phone to reveal the round result, then start the next round.';
+ $('modalBtn').textContent=champ?'Play again':'Next round';$('modalBtn').classList.remove('hide');$('modalOverlay').classList.remove('hide');
+ $('modalBtn').onclick=()=>{$('modalOverlay').classList.add('hide');if(champ)initGame();else nextRound()};
+}
+function nextRound(){
+ const old=state.players.map(p=>({name:p.name,tokens:p.tokens}));let deck=freshDeck(),removed=[deck.pop(),deck.pop()],hidden=deck.pop();
+ state={round:state.round+1,deck,hidden,removed,players:old.map((p,i)=>({...p,hand:deck.pop(),played:[],alive:true,shield:false})),turn:Math.random()<.5?0:1,phase:'draw',drawn:null,ended:false,roundWinner:null};
+ addLog('Round '+state.round+' begins. Face-up removed cards: '+removed.map(n=>n+' '+card(n).name).join(', ')+'.');
+ $('passOverlay').classList.remove('hide');$('passTitle').textContent=state.players[state.turn].name+' starts';$('passText').textContent='Pass the phone to '+state.players[state.turn].name+'. Keep your card secret.';$('passBtn').textContent="I'm ready";render();
+}
+$('passBtn').onclick=()=>{$('passOverlay').classList.add('hide');render()};
+$('newBtn').onclick=()=>{if(confirm('Start a new game and reset all tokens?'))initGame()};
+$('rulesBtn').onclick=()=>$('rulesOverlay').classList.remove('hide');
+$('closeRules').onclick=()=>$('rulesOverlay').classList.add('hide');
+$('clearLog').onclick=()=>{logLines=[];renderLog()};
+$('reference').innerHTML=defs.map(d=>`<div class="refitem"><b>${d.n} · ${d.name}</b><br>${d.desc}<br><span style="color:#8f99b3">${d.count} card${d.count>1?'s':''}</span></div>`).join('');
+initGame();
+</script>
+</body></html>
